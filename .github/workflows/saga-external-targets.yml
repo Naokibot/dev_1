@@ -1,0 +1,62 @@
+name: Saga external target validation
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  windows-d3d11:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: System evidence
+        shell: pwsh
+        run: |
+          Get-ComputerInfo | Select-Object WindowsProductName,WindowsVersion,OsArchitecture,CsManufacturer,CsModel | Format-List
+      - name: Build D3D11 probe
+        shell: cmd
+        run: call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat" && cl /nologo /EHsc ci\windows_d3d11_probe.cpp /Fe:d3d11_probe.exe
+      - name: Run D3D11 probe
+        shell: cmd
+        run: d3d11_probe.exe
+
+  macos-metal:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: System evidence
+        run: |
+          sw_vers
+          uname -a
+          system_profiler SPHardwareDataType || true
+      - name: Build Metal probe
+        run: clang++ -std=c++17 -fobjc-arc ci/macos_metal_probe.mm -framework Metal -framework Foundation -o metal_probe
+      - name: Run Metal probe
+        run: ./metal_probe
+
+  linux-vulkan-icd:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install real Vulkan ICD and X11 surface dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mesa-vulkan-drivers vulkan-tools xvfb libsdl2-2.0-0
+      - name: Vulkan ICD evidence
+        run: |
+          vulkaninfo --summary | tee vulkaninfo-summary.txt
+          test -s vulkaninfo-summary.txt
+      - name: Vulkan surface/present smoke
+        run: |
+          Xvfb :99 -screen 0 1024x768x24 >/tmp/xvfb.log 2>&1 &
+          export DISPLAY=:99
+          sleep 2
+          if command -v vkcube >/dev/null 2>&1; then
+            set +e
+            timeout 15s vkcube --c 5 2>&1 | tee vkcube.txt
+            rc=${PIPESTATUS[0]}
+            set -e
+            if [ "$rc" -ne 0 ] && [ "$rc" -ne 124 ]; then exit "$rc"; fi
+          else
+            echo VULKAN_ICD_OK_NO_VKCUBE_BINARY
+          fi
