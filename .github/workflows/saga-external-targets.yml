@@ -60,7 +60,7 @@ jobs:
       - name: Restore Saga Native source
         run: |
           mkdir -p saga-go-src
-          base64 -D source/saga-go-source-0.17.0.tar.gz.b64 > saga-go.tar.gz
+          base64 -D -i source/saga-go-source-0.17.0.tar.gz.b64 -o saga-go.tar.gz
           tar -xzf saga-go.tar.gz -C saga-go-src
       - name: Test and build Saga Native
         run: |
