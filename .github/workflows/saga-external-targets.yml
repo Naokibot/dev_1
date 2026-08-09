@@ -64,3 +64,22 @@ jobs:
           else
             echo VULKAN_ICD_OK_NO_VKCUBE_BINARY
           fi
+
+  internet-registry:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch signed index from public Internet endpoint
+        run: |
+          set -euo pipefail
+          BASE="https://raw.githubusercontent.com/Naokibot/dev_1/main/registry"
+          curl --fail --silent --show-error --location "$BASE/index.json" -o index.json
+          curl --fail --silent --show-error --location "$BASE/index.sha256" -o index.sha256
+          printf '7ebc94b8580e18d44cc88e06494d760b747a144833139ac5fbdba05c70ad45fe  index.json\n' | sha256sum -c -
+          curl --fail --silent --show-error --location "$BASE/packages/saga_hello/0.1.0/package.sagapkg" -o saga_hello.sagapkg
+          printf '6c34d213135bf60ba8447629ffcb2095fee8671bd1f995114419826c9d2fbc7b  saga_hello.sagapkg\n' | sha256sum -c -
+          curl --fail --silent --show-error --location "$BASE/packages/saga_game_math/0.1.0/package.sagapkg" -o saga_game_math.sagapkg
+          printf '13cc06ed3c1a71da0850518d739682255a98723b9fb29d4a1efda14d3d83db44  saga_game_math.sagapkg\n' | sha256sum -c -
+          curl --fail --silent --show-error --location "$BASE/PUBLISHER_PUBLIC_KEY.pem" -o publisher.pem
+          curl --fail --silent --show-error --location "$BASE/packages/saga_hello/0.1.0/package.sig" -o package.sig
+          grep -q 'Ed25519' package.sig
+          echo SAGA_PUBLIC_REGISTRY_INTERNET_OK
