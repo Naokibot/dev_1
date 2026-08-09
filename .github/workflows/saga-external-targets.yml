@@ -5,6 +5,32 @@ on:
   workflow_dispatch:
 
 jobs:
+  windows-saga-native:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.24.x'
+      - name: Restore Saga Native source
+        shell: pwsh
+        run: |
+          $b64 = (Get-Content source/saga-go-source-0.17.0.tar.gz.b64 -Raw).Trim()
+          [IO.File]::WriteAllBytes('saga-go.tar.gz',[Convert]::FromBase64String($b64))
+          New-Item -ItemType Directory -Force saga-go-src | Out-Null
+          tar -xzf saga-go.tar.gz -C saga-go-src
+      - name: Test and build Saga Native
+        shell: pwsh
+        run: |
+          Set-Location saga-go-src
+          go test ./cmd/saga-go
+          go build -o saga.exe ./cmd/saga-go
+          .\saga.exe --version
+          'print(40 + 2)' | Set-Content -Encoding utf8 target_smoke.saga
+          $out = .\saga.exe run target_smoke.saga
+          if (($out | Out-String).Trim() -ne '42') { throw "Unexpected Saga output: $out" }
+          Write-Host 'SAGA_NATIVE_WINDOWS_TARGET_OK output=42'
+
   windows-d3d11:
     runs-on: windows-latest
     steps:
@@ -23,6 +49,28 @@ jobs:
       - name: Run D3D11 probe
         shell: cmd
         run: d3d11_probe.exe
+
+  macos-saga-native:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.24.x'
+      - name: Restore Saga Native source
+        run: |
+          mkdir -p saga-go-src
+          base64 -D source/saga-go-source-0.17.0.tar.gz.b64 > saga-go.tar.gz
+          tar -xzf saga-go.tar.gz -C saga-go-src
+      - name: Test and build Saga Native
+        run: |
+          cd saga-go-src
+          go test ./cmd/saga-go
+          go build -o saga ./cmd/saga-go
+          ./saga --version
+          printf 'print(40 + 2)\n' > target_smoke.saga
+          test "$(./saga run target_smoke.saga)" = '42'
+          echo 'SAGA_NATIVE_MACOS_TARGET_OK output=42'
 
   macos-metal:
     runs-on: macos-latest
