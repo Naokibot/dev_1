@@ -13,9 +13,13 @@ jobs:
         shell: pwsh
         run: |
           Get-ComputerInfo | Select-Object WindowsProductName,WindowsVersion,OsArchitecture,CsManufacturer,CsModel | Format-List
+      - name: Configure MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
       - name: Build D3D11 probe
         shell: cmd
-        run: call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat" && cl /nologo /EHsc ci\windows_d3d11_probe.cpp /Fe:d3d11_probe.exe
+        run: cl /nologo /EHsc ci\windows_d3d11_probe.cpp /Fe:d3d11_probe.exe
       - name: Run D3D11 probe
         shell: cmd
         run: d3d11_probe.exe
