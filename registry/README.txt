@@ -1,0 +1,1 @@
+Saga signed static registry 0.17.0. Public Internet host: raw.githubusercontent.com/Naokibot/dev_1/main/registry. Versions are append-only; package SHA-256 and Ed25519 signatures are recorded in index.json. Commit-pinned raw URLs are preferred for immutable production consumption.

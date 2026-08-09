@@ -1,0 +1,1 @@
+{"schema":1,"release":"0.17.0","content":"signed starter registry seed","packages":2,"live_public_internet_endpoint":true,"host":"raw.githubusercontent.com/Naokibot/dev_1/main/registry","qualification":"Public GitHub-hosted immutable-by-commit static registry. main branch URLs are convenient; commit-pinned URLs are recommended for reproducibility."}
